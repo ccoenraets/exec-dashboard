@@ -1,34 +1,69 @@
-angular.module('starter', ['ionic', 'salesforce.oauth', 'starter.controllers', 'starter.services'])
+(function () {
 
-    .run(function ($ionicPlatform, OAuthService) {
+    "use strict";
 
-        window.location.hash = '#/login';
+    var $container = $('#container');
 
-        OAuthService.authenticate().then(function() {
-            window.location.hash = '#/contacts';
-        });
+    accounting.settings = {
+        currency: {
+            symbol : "$",   // default currency symbol is '$'
+            format: "%s%v", // controls output: %s = symbol, %v = value/number (can be object: see below)
+            decimal : ".",  // decimal point separator
+            thousand: ",",  // thousands separator
+            precision : 0   // decimal places
+        },
+        number: {
+            precision : 0,  // default precision on numbers is 0
+            thousand: ",",
+            decimal : "."
+        }
+    }
 
-    })
-
-    .config(function ($stateProvider) {
-
-        $stateProvider
-
-            .state('login', {
-                url: '/login',
-                templateUrl: 'templates/login.html'
+    document.addEventListener("deviceready", function () {
+        FastClick.attach(document.body);
+        oauth.init()
+            .done(function() {
+                opportunities.fetch(oauth.getClient())
+                    .done(function() {
+                        route();
+                    });
             })
-
-            .state('contact-list', {
-                url: '/contacts',
-                templateUrl: 'templates/contact-list.html',
-                controller: 'ContactListCtrl'
-            })
-
-            .state('contact-detail', {
-                url: '/contacts/:contactId',
-                templateUrl: 'templates/contact-detail.html',
-                controller: 'ContactDetailCtrl'
+            .fail(function() {
+                alert('Authentication Error!');
             });
 
+    }, false);
+
+// Uncomment the code below if you want to work with a fake/static version of the data
+    opportunities.fetch(oauth.getClient())
+        .done(function() {
+            route();
+        });
+
+    // Show/hide menu toggle
+    $('#btn-menu').click(function () {
+        if ($container.hasClass('offset')) {
+            $container.removeClass('offset');
+        } else {
+            $container.addClass('offset');
+        }
+        return false;
     });
+
+    // Simplistic view routing
+    $(window).on('hashchange', route);
+
+    function route() {
+        var hash = window.location.hash;
+
+        if (!hash) {
+            dashboards['deals-by-month'].render();
+            return;
+        }
+        dashboards[hash.substr(1)].render();
+
+        $container.removeClass('offset');
+
+    }
+
+}());
